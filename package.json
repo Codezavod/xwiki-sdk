@@ -1,0 +1,40 @@
+{
+  "name": "xwiki-sdk",
+  "version": "0.0.1",
+  "description": "XWiki unofficial SDK for Node.js",
+  "author": "Vadim Petrov <imposibrus@gmail.com> (https://imposibrus.tk)",
+  "license": "MIT",
+  "main": "src/XWikiSDK.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "homepage": "https://github.com/CodeZavod/xwiki-sdk",
+  "bugs": {
+    "url": "https://github.com/CodeZavod/xwiki-sdk/issues"
+  },
+  "keywords": [
+    "sdk",
+    "xwiki"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CodeZavod/xwiki-sdk.git"
+  },
+  "engines": {
+    "node": ">=7.0.0"
+  },
+  "files": [
+    "src/"
+  ],
+  "dependencies": {
+    "lodash.compact": "^3.0.1",
+    "lodash.isempty": "^4.4.0",
+    "lodash.omit": "^4.5.0",
+    "request": "^2.81.0",
+    "slug": "^0.9.1",
+    "uuid": "^3.0.1"
+  }
+}
