@@ -1,7 +1,9 @@
 
 const compact = require('lodash.compact'),
+    isArray = require('lodash.isarray'),
     slug = require('slug'),
     Request = require('./Request'),
+    Errors = require('./Errors'),
     userDefaultOptions = {
         active: 1,
     };
@@ -34,15 +36,32 @@ class XWikiSDK {
         return this;
     }
 
+    search(query) {
+        return this._request(`/rest/wikis/query?q=${encodeURIComponent(query)}&wikis=${this.wikiName}`);
+    }
+
+    pagesList(spaces = this.spaceName) {
+        const _spaces = XWikiSDK.normalizeSpaces(spaces);
+
+        return this._request(`/rest/wikis/${this.wikiName}${_spaces}/pages`);
+    }
+
+    spacesList() {
+        return this._request(`/rest/wikis/${this.wikiName}/spaces`);
+    }
+
     /**
      * @param {String} pageName
      * @param {Object} pageFields
      * @param {String} pageFields.title
      * @param {String} pageFields.content
+     * @param {String[]|String} spaces
      * @returns {Request}
      */
-    createPage(pageName, pageFields) {
-        return this._request(`/rest/wikis/${this.wikiName}/spaces/${this.spaceName}/pages/${pageName}`)
+    createPage(pageName, pageFields, spaces = this.spaceName) {
+        const _spaces = XWikiSDK.normalizeSpaces(spaces);
+
+        return this._request(`/rest/wikis/${this.wikiName}${_spaces}/pages/${pageName}`)
             .setBody(pageFields)
             .setMethod('PUT');
     }
@@ -52,6 +71,13 @@ class XWikiSDK {
             .setBody('{{include document="XWiki.XWikiUserSheet"/}}')
             .setMethod('PUT')
             .setSendPlainBody(true);
+    }
+
+    deletePage(pageName, spaces = this.spaceName) {
+        const _spaces = XWikiSDK.normalizeSpaces(spaces);
+
+        return this._request(`/rest/wikis/${this.wikiName}${_spaces}/pages/${pageName}`)
+            .setMethod('DELETE');
     }
 
     /**
@@ -96,6 +122,20 @@ class XWikiSDK {
     _request(url) {
         return new Request(url, this);
     }
+
+    static normalizeSpaces(spaces) {
+        let ret;
+
+        if (isArray(spaces)) {
+            ret = '/spaces/' + spaces.join('/spaces/');
+        } else {
+            ret = '/spaces/' + spaces;
+        }
+
+        return ret;
+    }
 }
+
+XWikiSDK.Errors = Errors;
 
 module.exports = XWikiSDK;

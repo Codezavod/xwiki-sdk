@@ -5,6 +5,7 @@ const util = require('util'),
     request = require('request'),
     uuid = require('uuid'),
     Constants = require('./Constants'),
+    Errors = require('./Errors'),
     debugLog = util.debuglog('xwiki-sdk');
 
 class Request {
@@ -91,7 +92,7 @@ class Request {
     send() {
         const requestOptions = Object.assign({}, this.defaultRequestOptions, {
             url: this.url,
-            qs: Request._normalizeQueryParams(Object.assign({}, {media: 'json'}, this.query)),
+            qs: Request._normalizeQueryParams(Object.assign({}, {media: 'json', isSDK: '1'}, this.query)),
             method: this.method,
             auth: this.sdk.auth,
         });
@@ -125,12 +126,12 @@ class Request {
                 this.log(`(${this.requestId}) Request.send: response headers:`, res.headers);
 
                 if (this.checkStatusCode && !this.successStatusCodes.has(res.statusCode)) {
-                    let invalidStatusCodeError = new Error();
+                    let invalidStatusCodeError = new Errors.InvalidStatusCodeError();
 
                     invalidStatusCodeError.resData = resData;
                     invalidStatusCodeError.res = res;
 
-                    throw invalidStatusCodeError;
+                    return reject(invalidStatusCodeError);
                 }
 
                 if (this.parseResponseInJSON) {
@@ -147,7 +148,7 @@ class Request {
                     } catch(err) {
                         this.log(`(${this.requestId}) Request.send parsing JSON: invalid response:`, resData);
 
-                        let invalidJSONError = new Error('Invalid JSON response:' + resData);
+                        let invalidJSONError = new Errors.InvalidJSONError('Invalid JSON response:' + resData);
 
                         invalidJSONError.resData = resData;
                         invalidJSONError.res = res;
