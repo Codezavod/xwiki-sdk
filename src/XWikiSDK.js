@@ -1,7 +1,5 @@
 
 const compact = require('lodash.compact'),
-    isArray = require('lodash.isarray'),
-    slug = require('slug'),
     Request = require('./Request'),
     Errors = require('./Errors'),
     userDefaultOptions = {
@@ -92,18 +90,34 @@ class XWikiSDK {
             .setBody(Object.assign({}, {className}, properties));
     }
 
+    getPageObjects(pageName, className) {
+        return this._request(`/rest/wikis/${this.wikiName}/spaces/${this.spaceName}/pages/${pageName}/objects/${className}`);
+    }
+
+    getPageObjectProperties(pageName, className, number) {
+        return this._request(`/rest/wikis/${this.wikiName}/spaces/${this.spaceName}/pages/${pageName}/objects/${className}/${number}/properties`);
+    }
+
+    updatePageObjectProperties(pageName, className, number, properties) {
+        return this._request(`/rest/wikis/${this.wikiName}/spaces/${this.spaceName}/pages/${pageName}/objects/${className}/${number}`)
+            .setMethod('PUT')
+            .setBody(properties);
+    }
+
     /**
-     * @param {Object} options
-     * @param {String} options.first_name
-     * @param {String} options.last_name
-     * @param {String} options.email
-     * @param {String} options.password
-     * @param {Number} options.active
+     * @param {Object} userProps
+     * @param {String} userProps.first_name
+     * @param {String} userProps.last_name
+     * @param {String} userProps.email
+     * @param {String} userProps.password
+     * @param {Number} userProps.active
+     * @param {String} userLogin
+     * @param {String} role
      * @returns {Request}
      */
-    createUser(options) {
-        const userData = Object.assign({}, userDefaultOptions, options),
-            userLogin = slug(compact([userData.first_name, userData.last_name]).join('')),
+    createUser(userProps, userLogin, role) {
+        const userData = Object.assign({}, userDefaultOptions, userProps),
+            additionalGroupName = role2GroupName[role],
             userProperties = {};
 
         for (var i = 0, keys = Object.keys(userData); i < keys.length; i++) {
@@ -114,9 +128,43 @@ class XWikiSDK {
             return this.createPageObject(userLogin, 'XWiki.XWikiUsers', userProperties).then(() => {
                 return this.createPageObject('XWikiAllGroup', 'XWiki.XWikiGroups', {
                     'property#member': 'XWiki.' + userLogin,
+                }).then((res) => {
+                    if (!additionalGroupName) {
+                        return res;
+                    }
+
+                    return this.createPageObject(additionalGroupName, 'XWiki.XWikiGroups', {
+                        'property#member': 'XWiki.' + userLogin,
+                    });
                 });
             });
         });
+    }
+
+    updateUser(userProps, userLogin) {
+        return this.getPageObjects(userLogin, 'XWiki.XWikiUsers').then((resJSON) => {
+            if (!resJSON.objectSummaries) {
+                return Promise.reject('no such object');
+            }
+
+            const usersObject = resJSON.objectSummaries.find((obj) => obj.className === 'XWiki.XWikiUsers');
+
+            if (!usersObject) {
+                return Promise.reject('no XWiki.XWikiUsers object');
+            }
+
+            const stylizedProperties = {};
+
+            for (var i = 0, keys = Object.keys(userProps); i < keys.length; i++) {
+                stylizedProperties['property#' + keys[i]] = userProps[keys[i]];
+            }
+
+            return this.updatePageObjectProperties(userLogin, 'XWiki.XWikiUsers', usersObject.number, stylizedProperties);
+        });
+    }
+
+    deleteUser(login) {
+        return this.deletePage(login, ['XWiki']);
     }
 
     _request(url) {
@@ -126,7 +174,7 @@ class XWikiSDK {
     static normalizeSpaces(spaces) {
         let ret;
 
-        if (isArray(spaces)) {
+        if (Array.isArray(spaces)) {
             ret = '/spaces/' + spaces.join('/spaces/');
         } else {
             ret = '/spaces/' + spaces;
@@ -135,6 +183,12 @@ class XWikiSDK {
         return ret;
     }
 }
+
+const role2GroupName = {
+    superadmin: 'XWikiSuperAdminGroup',
+    admin: 'XWikiAdminGroup',
+    editor: 'XWikiEditorGroup',
+};
 
 XWikiSDK.Errors = Errors;
 
