@@ -11,6 +11,7 @@ class XWikiSDK {
         this.apiHost = apiHost;
         this.wikiName = 'xwiki';
         this.spaceName = 'XWiki';
+        this.usersSpaceName = 'Сотрудники';
     }
 
     setAuth(userName, password) {
@@ -30,6 +31,12 @@ class XWikiSDK {
 
     setSpace(spaceName) {
         this.spaceName = spaceName;
+
+        return this;
+    }
+
+    setUsersSpace(spaceName) {
+        this.usersSpaceName = spaceName;
 
         return this;
     }
@@ -65,7 +72,7 @@ class XWikiSDK {
     }
 
     createUserPage(userLogin) {
-        return this._request(`/rest/wikis/${this.wikiName}/spaces/${this.spaceName}/pages/${userLogin}`)
+        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(this.usersSpaceName)}/pages/${userLogin}`)
             .setBody('{{include document="XWiki.XWikiUserSheet"/}}')
             .setMethod('PUT')
             .setSendPlainBody(true);
@@ -82,24 +89,25 @@ class XWikiSDK {
      * @param {String} pageName
      * @param {String} className
      * @param {Object} properties
+     * @param {String} spaceName
      * @returns {Request}
      */
-    createPageObject(pageName, className, properties) {
-        return this._request(`/rest/wikis/${this.wikiName}/spaces/${this.spaceName}/pages/${pageName}/objects`)
+    createPageObject(pageName, className, properties, spaceName = this.spaceName) {
+        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(spaceName)}/pages/${pageName}/objects`)
             .setMethod('POST')
             .setBody(Object.assign({}, {className}, properties));
     }
 
-    getPageObjects(pageName, className) {
-        return this._request(`/rest/wikis/${this.wikiName}/spaces/${this.spaceName}/pages/${pageName}/objects/${className}`);
+    getPageObjects(pageName, className, spaceName = this.spaceName) {
+        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(spaceName)}/pages/${pageName}/objects/${className}`);
     }
 
     getPageObjectProperties(pageName, className, number) {
-        return this._request(`/rest/wikis/${this.wikiName}/spaces/${this.spaceName}/pages/${pageName}/objects/${className}/${number}/properties`);
+        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(this.spaceName)}/pages/${pageName}/objects/${className}/${number}/properties`);
     }
 
-    updatePageObjectProperties(pageName, className, number, properties) {
-        return this._request(`/rest/wikis/${this.wikiName}/spaces/${this.spaceName}/pages/${pageName}/objects/${className}/${number}`)
+    updatePageObjectProperties(pageName, className, number, properties, spaceName = this.spaceName) {
+        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(spaceName)}/pages/${pageName}/objects/${className}/${number}`)
             .setMethod('PUT')
             .setBody(properties);
     }
@@ -124,8 +132,8 @@ class XWikiSDK {
             userProperties['property#' + keys[i]] = userData[keys[i]];
         }
 
-        return this.createUserPage(userLogin).then(() => {
-            return this.createPageObject(userLogin, 'XWiki.XWikiUsers', userProperties).then(() => {
+        return this.createUserPage(userLogin, this.usersSpaceName).then(() => {
+            return this.createPageObject(userLogin, 'XWiki.XWikiUsers', userProperties, this.usersSpaceName).then(() => {
                 return this.createPageObject('XWikiAllGroup', 'XWiki.XWikiGroups', {
                     'property#member': 'XWiki.' + userLogin,
                 }).then((res) => {
@@ -142,7 +150,7 @@ class XWikiSDK {
     }
 
     updateUser(userProps, userLogin) {
-        return this.getPageObjects(userLogin, 'XWiki.XWikiUsers').then((resJSON) => {
+        return this.getPageObjects(userLogin, 'XWiki.XWikiUsers', this.usersSpaceName).then((resJSON) => {
             if (!resJSON.objectSummaries) {
                 return Promise.reject('no such object');
             }
@@ -159,12 +167,12 @@ class XWikiSDK {
                 stylizedProperties['property#' + keys[i]] = userProps[keys[i]];
             }
 
-            return this.updatePageObjectProperties(userLogin, 'XWiki.XWikiUsers', usersObject.number, stylizedProperties);
+            return this.updatePageObjectProperties(userLogin, 'XWiki.XWikiUsers', usersObject.number, stylizedProperties, this.usersSpaceName);
         });
     }
 
     deleteUser(login) {
-        return this.deletePage(login, ['XWiki']);
+        return this.deletePage(login, [this.usersSpaceName]);
     }
 
     _request(url) {
@@ -175,9 +183,9 @@ class XWikiSDK {
         let ret;
 
         if (Array.isArray(spaces)) {
-            ret = '/spaces/' + spaces.join('/spaces/');
+            ret = '/spaces/' + spaces.map((space) => encodeURIComponent(space)).join('/spaces/');
         } else {
-            ret = '/spaces/' + spaces;
+            ret = '/spaces/' + encodeURIComponent(spaces);
         }
 
         return ret;

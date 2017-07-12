@@ -1,6 +1,6 @@
 {
   "name": "xwiki-sdk",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "XWiki unofficial SDK for Node.js",
   "author": "Vadim Petrov <imposibrus@gmail.com> (https://imposibrus.tk)",
   "license": "MIT",
