@@ -55,14 +55,6 @@ class XWikiSDK {
         return this._request(`/rest/wikis/${this.wikiName}/spaces`);
     }
 
-    /**
-     * @param {String} pageName
-     * @param {Object} pageFields
-     * @param {String} pageFields.title
-     * @param {String} pageFields.content
-     * @param {String[]|String} spaces
-     * @returns {Request}
-     */
     createPage(pageName, pageFields, spaces = this.spaceName) {
         const _spaces = XWikiSDK.normalizeSpaces(spaces);
 
@@ -85,13 +77,6 @@ class XWikiSDK {
             .setMethod('DELETE');
     }
 
-    /**
-     * @param {String} pageName
-     * @param {String} className
-     * @param {Object} properties
-     * @param {String} spaceName
-     * @returns {Request}
-     */
     createPageObject(pageName, className, properties, spaceName = this.spaceName) {
         return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(spaceName)}/pages/${pageName}/objects`)
             .setMethod('POST')
@@ -112,17 +97,6 @@ class XWikiSDK {
             .setBody(properties);
     }
 
-    /**
-     * @param {Object} userProps
-     * @param {String} userProps.first_name
-     * @param {String} userProps.last_name
-     * @param {String} userProps.email
-     * @param {String} userProps.password
-     * @param {Number} userProps.active
-     * @param {String} userLogin
-     * @param {String} role
-     * @returns {Request}
-     */
     createUser(userProps, userLogin, role) {
         const userData = Object.assign({}, userDefaultOptions, userProps),
             additionalGroupName = role2GroupName[role],
