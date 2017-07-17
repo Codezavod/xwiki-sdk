@@ -58,13 +58,13 @@ class XWikiSDK {
     createPage(pageName, pageFields, spaces = this.spaceName) {
         const _spaces = XWikiSDK.normalizeSpaces(spaces);
 
-        return this._request(`/rest/wikis/${this.wikiName}${_spaces}/pages/${pageName}`)
+        return this._request(`/rest/wikis/${this.wikiName}${_spaces}/pages/${encodeURIComponent(pageName)}`)
             .setBody(pageFields)
             .setMethod('PUT');
     }
 
     createUserPage(userLogin) {
-        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(this.usersSpaceName)}/pages/${userLogin}`)
+        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(this.usersSpaceName)}/pages/${encodeURIComponent(userLogin)}`)
             .setBody('{{include document="XWiki.XWikiUserSheet"/}}')
             .setMethod('PUT')
             .setSendPlainBody(true);
@@ -73,26 +73,26 @@ class XWikiSDK {
     deletePage(pageName, spaces = this.spaceName) {
         const _spaces = XWikiSDK.normalizeSpaces(spaces);
 
-        return this._request(`/rest/wikis/${this.wikiName}${_spaces}/pages/${pageName}`)
+        return this._request(`/rest/wikis/${this.wikiName}${_spaces}/pages/${encodeURIComponent(pageName)}`)
             .setMethod('DELETE');
     }
 
     createPageObject(pageName, className, properties, spaceName = this.spaceName) {
-        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(spaceName)}/pages/${pageName}/objects`)
+        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(spaceName)}/pages/${encodeURIComponent(pageName)}/objects`)
             .setMethod('POST')
             .setBody(Object.assign({}, {className}, properties));
     }
 
     getPageObjects(pageName, className, spaceName = this.spaceName) {
-        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(spaceName)}/pages/${pageName}/objects/${className}`);
+        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(spaceName)}/pages/${encodeURIComponent(pageName)}/objects/${className}`);
     }
 
     getPageObjectProperties(pageName, className, number) {
-        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(this.spaceName)}/pages/${pageName}/objects/${className}/${number}/properties`);
+        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(this.spaceName)}/pages/${encodeURIComponent(pageName)}/objects/${className}/${number}/properties`);
     }
 
     updatePageObjectProperties(pageName, className, number, properties, spaceName = this.spaceName) {
-        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(spaceName)}/pages/${pageName}/objects/${className}/${number}`)
+        return this._request(`/rest/wikis/${this.wikiName}/spaces/${encodeURIComponent(spaceName)}/pages/${encodeURIComponent(pageName)}/objects/${className}/${number}`)
             .setMethod('PUT')
             .setBody(properties);
     }
