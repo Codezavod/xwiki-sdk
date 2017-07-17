@@ -1,6 +1,6 @@
 {
   "name": "xwiki-sdk",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "XWiki unofficial SDK for Node.js",
   "author": "Vadim Petrov <imposibrus@gmail.com> (https://imposibrus.tk)",
   "license": "MIT",
@@ -28,7 +28,8 @@
     "node": ">=7.0.0"
   },
   "files": [
-    "src/"
+    "src/",
+    "index.d.ts"
   ],
   "dependencies": {
     "lodash.compact": "^3.0.1",
